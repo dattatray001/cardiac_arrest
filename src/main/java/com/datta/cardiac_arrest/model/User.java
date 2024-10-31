@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,8 @@ public class User {
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
 	private List<String> roles;
-
+	@DBRef
+	@JsonIgnore  // This can help avoid circular reference issues in JSON serialization
+	private List<UserPrediction> predictions; // List of predictions for the user
 
 }

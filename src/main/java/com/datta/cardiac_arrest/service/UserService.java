@@ -1,6 +1,11 @@
 package com.datta.cardiac_arrest.service;
 
+import com.datta.cardiac_arrest.constant.ErrorMessages;
+import com.datta.cardiac_arrest.exception.BadCredentialsException;
+import com.datta.cardiac_arrest.exception.UserAlreadyExistsException;
+import com.datta.cardiac_arrest.exception.UserNotFoundException;
 import com.datta.cardiac_arrest.model.User;
+import com.datta.cardiac_arrest.model.UserPrediction;
 import com.datta.cardiac_arrest.repo.UserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,21 +34,46 @@ public class UserService {
     AuthenticationManager authenticationManager;
 
     public User saveUser(User user) {
-        user.setPassword(encoder.encode(user.getPassword()));
-        user.setRoles(new ArrayList<>(List.of("USER")));
+        User user1 = repo.findByUsername(user.getUsername());
+        if (user1 != null) {
+            throw new UserAlreadyExistsException(
+                    ErrorMessages.USER_ALREADY_EXISTS.getErrorMessage(),
+                    ErrorMessages.USER_ALREADY_EXISTS.getErrorCode()
+            );
 
-        return repo.save(user);
+        }else {
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.setRoles(new ArrayList<>(List.of("USER")));
+
+
+            return repo.save(user);
+        }
 
     }
 
     public String login(User user){
-        Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        User user1 = repo.findByUsername(user.getUsername());
+        if (user1 != null) {
+            Authentication authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
-        if(authentication.isAuthenticated())
-            return jwtService.generateToken(user.getUsername());
-        else
-            return "Login Failed";
+            if(authentication.isAuthenticated()) {
+                return jwtService.generateToken(user.getUsername());
+            }else{
+                throw  new BadCredentialsException(
+                        ErrorMessages.PASSWORD_NOT_MATCHED.getErrorMessage(),
+                        ErrorMessages.PASSWORD_NOT_MATCHED.getErrorCode()
+                );
+            }
+
+        }else{
+            throw  new UserNotFoundException(
+                    ErrorMessages.USER_NOT_FOUND.getErrorMessage(),
+                    ErrorMessages.USER_NOT_FOUND.getErrorCode()
+            );
+
+        }
+
     }
 
 
@@ -56,8 +86,28 @@ public class UserService {
             user1.setPassword(encoder.encode(user.getPassword()));
             log.info("updated successful");
             return repo.save(user1);
+        }else{
+            throw  new UserNotFoundException(
+                    ErrorMessages.USER_NOT_FOUND.getErrorMessage(),
+                    ErrorMessages.USER_NOT_FOUND.getErrorCode()
+            );
+
         }
-        return null;
+
+    }
+
+    public void updateReport(String userName, UserPrediction userPrediction){
+        User user=repo.findByUsername(userName);
+        if(user!=null){
+            if (user.getPredictions() == null) {
+                user.setPredictions(new ArrayList<>());
+            }
+            List<UserPrediction> list=user.getPredictions();
+            list.add(userPrediction);
+            user.setPredictions(list);
+            repo.save(user);
+        }
+
     }
 
 }
