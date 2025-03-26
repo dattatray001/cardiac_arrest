@@ -7,11 +7,13 @@ import com.datta.cardiac_arrest.exception.UserNotFoundException;
 import com.datta.cardiac_arrest.model.User;
 import com.datta.cardiac_arrest.model.UserPrediction;
 import com.datta.cardiac_arrest.repo.UserRepo;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +50,12 @@ public class UserService {
 
             return repo.save(user);
         }
+
+    }
+
+    public User getUser(HttpServletRequest request){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return repo.findByUsername( authentication.getName());
 
     }
 

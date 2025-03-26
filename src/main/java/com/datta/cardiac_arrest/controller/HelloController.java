@@ -24,9 +24,7 @@ public class HelloController {
 	@GetMapping("about")
 	public String about(HttpServletRequest request) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		authentication.getAuthorities().forEach(authority ->log.error(authority.getAuthority()));
 
-
-		return "datta ";
+        return authentication.getName();
 	}
 }
